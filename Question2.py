@@ -44,19 +44,34 @@ for index_5, groupData5 in enumerate(filtered_data_5):
         qty_1 = groupData1['qty'].values.tolist()
         qty_1 = np.array([qty_1])
         qty_1 = qty_1.T
-        for i in range(0, len(qty_1)-len_5):
-            distance, _ = fastdtw(qty_5, qty_1[i:i+len_5], dist=euclidean)
-            if distance < min_distance:
-                min_distance = distance
-                most_similar = groupData1[['seller_no', 'product_no', 'warehouse_no']].iloc[0]
-                matched = groupData1
-                index_in_1 = i
-    # change the tag for reasonable approximate
-    
-    
-    break
-    model = auto_arima(combined['qty'].values, seasonal=True, m=7)
+        distance, _ = fastdtw(qty_5, qty_1, dist=euclidean)
+        if distance < min_distance:
+            min_distance = distance
+            most_similar = groupData1[['seller_no', 'product_no', 'warehouse_no']].iloc[0]
+            matched = groupData1
+
+    # prediction based on matched and current groupData5
+    # find the appropriate parameter for `q` `d` `p`
+    # try to merge matched and current groupData5 as time series of qty
+    merged_data = pd.concat([matched, groupData5])
+    merge_data = merged_data.sort_values(by=['date'])
+    merged_data = merged_data.groupby('date')['qty'].mean()
+    # print(merged_data)
+    # break
+    merged_data.interpolate(method='linear', inplace=True)
+    model = auto_arima(merged_data, seasonal=True, m=7)
     # generate model
-    sarima_model = SARIMAX(combined['qty'].values, order=model.order, seasonal_order=model.seasonal_order)
+    sarima_model = SARIMAX(merged_data, order=model.order, seasonal_order=model.seasonal_order)
     # fit model
     sarima_model_fit = sarima_model.fit()
+    # predict future 15 days product selling quantity
+    preds = sarima_model_fit.predict(start=len(matched), end=len(matched)+14)
+    prediction = {
+        'seller_no': current_info[0],
+        'product_no': current_info[1],
+        'warehouse_no': current_info[2],
+        'date': pd.date_range(start='2023/05/16', periods=15, freq='D'),
+        'forecast_qty': preds
+    }
+    output_data_frame=pd.concat([output_data_frame, pd.DataFrame(prediction)])
+output_data_frame.to_excel('结果表/结果表2-预测结果表.xlsx', index=False)
