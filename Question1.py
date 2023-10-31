@@ -20,7 +20,7 @@ data['date'] = pd.to_datetime(data['date'])
 grouped = data.groupby(['seller_no', 'product_no', 'warehouse_no'])
 # summary completed, elements stored in type dict sell_hist
 # get product quantity for prediction
-# apply both Kalmann Filter and z-score filter
+# apply z-score filter
 filtered_data = filter(grouped)
 # prediction
 for index, groupData in enumerate(filtered_data):
@@ -28,9 +28,8 @@ for index, groupData in enumerate(filtered_data):
     groupData['qty'].fillna(groupData['qty'].mean(), inplace=True)
     # find the appropriate parameter for `q` `d` `p`
     model = auto_arima(groupData['qty'].values, seasonal=True, m=7)
-    print("model_order: {}, seasonal_order: {}".format(model.order, model.seasonal_order))
     # generate model
-    sarima_model = ARIMA(groupData['qty'].values, order=model.order, seasonal_order=model.seasonal_order)
+    sarima_model = SARIMAX(groupData['qty'].values, order=model.order, seasonal_order=model.seasonal_order)
     # fit model
     sarima_model_fit = sarima_model.fit()
     # predict future 15 days product selling quantity

@@ -11,7 +11,7 @@ from pmdarima import auto_arima
 import re
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
-
+from dtaidistance import dtw
 def extract_number(s):
     match = re.search(r'\d+', s)
     if match:
@@ -60,25 +60,4 @@ def filter(grouped):
         # append to filtered_data
         result.append(group_data)
     return result  
-  
-def find_most_similar(new_series, historical_data):
-    min_distance = float('inf')
-    most_similar_series = None
-    
-    # interpolate historical data to fill in missing values
-    interpolated_data = []
-    for series in historical_data:
-        series = pd.DataFrame(series, columns=['date', 'qty']).set_index('date')
-        series.index = pd.to_datetime(series.index)  # convert index to DatetimeIndex
-        if series.isna().all().item():  # skip if series is empty or contains only missing values
-            continue
-        series = series.resample('D').asfreq().interpolate(method='linear')
-        interpolated_data.append(series['qty'].values)
-    
-    for historical_series in interpolated_data:
-        distance, _ = fastdtw(new_series, historical_series, dist=euclidean)
-        if distance < min_distance:
-            min_distance = distance
-            most_similar_series = historical_series
-            
-    return most_similar_series
+

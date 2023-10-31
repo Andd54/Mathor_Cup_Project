@@ -1,0 +1,13 @@
+file 5:
+seller_no           seller_1
+product_no      product_2005
+warehouse_no            wh_2
+Name: 7235, dtype: object
+in file 1: from 90 to 133
+seller_no         seller_9
+product_no      product_96
+warehouse_no         wh_14
+Name: 222108, dtype: object
+mindistance = 64.0
+
+

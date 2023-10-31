@@ -51,12 +51,16 @@ for index_5, groupData5 in enumerate(filtered_data_5):
                 most_similar = groupData1[['seller_no', 'product_no', 'warehouse_no']].iloc[0]
                 matched = groupData1
                 index_in_1 = i
-    # change the tag for reasonable approximate
-    
-    
-    break
-    model = auto_arima(combined['qty'].values, seasonal=True, m=7)
-    # generate model
-    sarima_model = SARIMAX(combined['qty'].values, order=model.order, seasonal_order=model.seasonal_order)
-    # fit model
-    sarima_model_fit = sarima_model.fit()
+    dtwed = {
+        'seller_no': current_info[0],
+        'product_no': current_info[1],
+        'warehouse_no': current_info[2],
+        'qty_new': qty_5,
+        'qty_matched': qty_1[index_in_1:index_in_1+len_5],
+        'dtw_distance': min_distance,
+        'seller_no_matched': most_similar[0],
+        'product_no_matched': most_similar[1],
+        'warehouse_no_matched': most_similar[2]
+    }
+    output_data_frame = pd.concat([output_data_frame, pd.DataFrame(dtwed)])
+output_data_frame.to_excel('dtw_result.xlsx', index=False)
