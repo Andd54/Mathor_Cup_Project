@@ -11,7 +11,12 @@ from pmdarima import auto_arima
 import re
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
-from dtaidistance import dtw
+from statsmodels.tsa.seasonal import STL
+from sklearn.cluster import KMeans
+from sklearn.model_selection import cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 def extract_number(s):
     match = re.search(r'\d+', s)
     if match:
