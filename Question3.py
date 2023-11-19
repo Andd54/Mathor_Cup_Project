@@ -26,9 +26,10 @@ filtered_data_6 = filter(grouped_6)
 # set the corresponding seller_no, product_no, warehouse_no as index
 
 cumulative_11_11 = np.array([])
-
+i = 0
 for index6, groupData6 in enumerate(filtered_data_6):
     groupData6['qty'].fillna(groupData6['qty'].mean(), inplace=True)
+    groupData6.sort_values(by=['date'], inplace=True)
     qty_6 = groupData6['qty'].values.tolist()
     qty_6 = np.array([qty_6])
     qty_6 = qty_6.T
@@ -38,20 +39,26 @@ for index6, groupData6 in enumerate(filtered_data_6):
     #STL decomposition
     stl_6 = STL(qty_6, period = 11, trend = 21, seasonal = 7)
     result_6 = stl_6.fit()
-    name_6 = groupData6[['seller_no', 'product_no', 'warehouse_no']].iloc[0]
-    seller_no_6, product_no_6, warehouse_no_6 = name_6[0], name_6[1], name_6[2]
+    name_6 = groupData6[['seller_no', 'product_no', 'warehouse_no']]
+    seller_no_6, product_no_6, warehouse_no_6 = name_6.iloc[0][0], name_6.iloc[0][1], name_6.iloc[0][2]
     seasonal_6, trend_6, resid_6 = result_6.seasonal, result_6.trend, result_6.resid
     # find corresponding data 
     groupData1 = grouped_1.get_group((seller_no_6, product_no_6, warehouse_no_6))
-    groupData1 = filter(grouped_1)[0]
+    groupData1 = filter(groupData1.groupby(['seller_no', 'product_no', 'warehouse_no']))
+    groupData1 = list(groupData1)[0] # convert the groupby object to a list and get the first element
+    # print(f'groupData1: {groupData1['qty']}')
+    # break
     groupData1['qty'].fillna(groupData1['qty'].mean(), inplace=True)
+    groupData1.sort_values(by=['date'], inplace=True)
     qty_1 = groupData1['qty'].values.tolist()
     qty_1 = np.array([qty_1])
     qty_1 = qty_1.T
     len_1 = len(qty_1)
     qty_1 = qty_1.flatten()
+    # if i == 6:
+    #     break
     # STL decomposition for data1
-    stl_1 = STL(qty_1, period = len_1, trend = 317, seasonal = 7)
+    stl_1 = STL(qty_1, period = len_1,trend = 317 ,seasonal = 7)
     result_1 = stl_1.fit()
     seasonal_1, trend_1, resid_1 = result_1.seasonal, result_1.trend, result_1.resid
     # calculate the shortest dtw distance between the seasonal_1 and seasonal_6
@@ -64,18 +71,23 @@ for index6, groupData6 in enumerate(filtered_data_6):
         if distance < min_distance:
             min_distance = distance
             index = i
+    # print(f'{trend_1}\n\n')
     trend_1[index:index+len(trend_6)] = trend_6
-    Y_1 = seasonal_1 + trend_1 + resid_1
+    y1 = [s + t + r for s, t, r in zip(seasonal_1, trend_1, resid_1)]
+    print(f'{y1}\n\n')
     # start SARIMAX model with updated trend_1
-    model = auto_arima(Y_1, seasonal=True, m=7)
-    sarima_model = SARIMAX(Y_1, order=model.order, seasonal_order=model.seasonal_order)
+    model = auto_arima(y1, seasonal=True, m=7)
+    sarima_model = SARIMAX(y1, order=model.order, seasonal_order=model.seasonal_order)
     sarima_model_fit = sarima_model.fit()
     # predict future 35 days product selling quantity
-    preds = sarima_model_fit.predict(start=len(Y_1), end=len(Y_1)+34)
+    preds = sarima_model_fit.predict(start=len(y1), end=len(y1)+34)
+    ts_1 = pd.Series(groupData1['qty'].values.tolist(), index=groupData1['date'])
+    ts_2 = pd.Series(preds[0:15], index=pd.date_range(start='2023/5/15', periods=15, freq='D'))
     preds = preds[-20:] 
     # get the last 20 elements in preds
     # update output_data_frame
     date_range = pd.date_range(start='2023/06/01', periods=20, freq='D')
+    ts_3 = pd.Series(preds, index=date_range)
     prediction ={
         'seller_no': seller_no_6,
         'product_no': product_no_6,
@@ -84,5 +96,6 @@ for index6, groupData6 in enumerate(filtered_data_6):
         'forecast_qty': preds
     }
     output_data_frame = pd.concat([output_data_frame, pd.DataFrame(prediction)])
+
 output_data_frame.to_excel('结果表/结果表3-预测结果表.xlsx', index=False)
     

@@ -27,7 +27,9 @@ filtered_data_1 = filter(grouped_1)
 qty_5 = None
 qty_1 = None
 # dynamic time warping
+i = 0
 for index_5, groupData5 in enumerate(filtered_data_5):
+    groupData5=groupData5.sort_values(by=['date'])
     groupData5['qty'].fillna(groupData5['qty'].mean(), inplace=True)
     qty_5 = groupData5['qty'].values.tolist()
     qty_5 = np.array([qty_5])
@@ -40,6 +42,7 @@ for index_5, groupData5 in enumerate(filtered_data_5):
     index_in_1 = 0
     for index_1, groupData1 in enumerate(filtered_data_1):
         min_distance = float('inf')
+        groupData1=groupData1.sort_values(by=['date'])
         groupData1['qty'].fillna(groupData1['qty'].mean(), inplace=True)
         qty_1 = groupData1['qty'].values.tolist()
         qty_1 = np.array([qty_1])
@@ -54,7 +57,7 @@ for index_5, groupData5 in enumerate(filtered_data_5):
     # find the appropriate parameter for `q` `d` `p`
     # try to merge matched and current groupData5 as time series of qty
     merged_data = pd.concat([matched, groupData5])
-    merge_data = merged_data.sort_values(by=['date'])
+    merged_data = merged_data.sort_values(by=['date'])
     merged_data = merged_data.groupby('date')['qty'].mean()
     # print(merged_data)
     # break
@@ -66,12 +69,25 @@ for index_5, groupData5 in enumerate(filtered_data_5):
     sarima_model_fit = sarima_model.fit()
     # predict future 15 days product selling quantity
     preds = sarima_model_fit.predict(start=len(matched), end=len(matched)+14)
+    date_range = pd.date_range(start='2023/05/16', periods=15, freq='D')
     prediction = {
         'seller_no': current_info[0],
         'product_no': current_info[1],
         'warehouse_no': current_info[2],
-        'date': pd.date_range(start='2023/05/16', periods=15, freq='D'),
+        'date': date_range,
         'forecast_qty': preds
     }
+    # if i == 8:
+    
+    # ts = pd.Series(groupData5['qty'].values, index=groupData5['date'])
+    # pred = pd.Series(preds, index=date_range) 
+    # plt.plot(ts, color = 'blue', label = 'Original')
+    # plt.plot(pred, color='orange', label='Forecast')
+    # plt.title(f'{current_info[0]}-{current_info[1]}-{current_info[2]} Prediction based on\n combined information from {most_similar[0]}-{most_similar[1]}-{most_similar[2]}')
+    # plt.legend()
+    # plt.show()
+    # break
+    # i += 1
+    # update output_data_frame
     output_data_frame=pd.concat([output_data_frame, pd.DataFrame(prediction)])
 output_data_frame.to_excel('结果表/结果表2-预测结果表.xlsx', index=False)

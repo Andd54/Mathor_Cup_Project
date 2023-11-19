@@ -17,6 +17,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from statsmodels.stats.diagnostic import acorr_ljungbox
 def extract_number(s):
     match = re.search(r'\d+', s)
     if match:
@@ -50,7 +51,6 @@ def xlsx_extract(cache):
     return sell_hist
 
 # BEGIN: kalman_filter
-from pykalman import KalmanFilter
 def filter(grouped):
     result = []
     for group_name, group_data in grouped:
@@ -65,4 +65,3 @@ def filter(grouped):
         # append to filtered_data
         result.append(group_data)
     return result  
-

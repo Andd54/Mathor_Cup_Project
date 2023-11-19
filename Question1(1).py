@@ -22,6 +22,7 @@ grouped = data.groupby(['seller_no', 'product_no', 'warehouse_no'])
 # get product quantity for prediction
 # apply z-score filter
 filtered_data = filter(grouped)
+i = 0;
 # prediction
 for index, groupData in enumerate(filtered_data):
     # fill NaN with mean
@@ -45,6 +46,16 @@ for index, groupData in enumerate(filtered_data):
         'date': date_range,
         'forecast_qty': preds
     }
+    # if i == 8:
+    #     ts = pd.Series(groupData['qty'].values, index=groupData['date'])
+    #     pred = pd.Series(preds, index=date_range)
+    #     plt.plot(ts, color = 'blue', label = 'Original')
+    #     plt.plot(pred, color='orange', label='Predicted')
+    #     plt.title(f'{group_name[0]}-{group_name[1]}-{group_name[2]} Prediction')
+    #     plt.legend()
+    #     plt.show()
+    #     break
     # update output_data_frame
     output_data_frame = pd.concat([output_data_frame, pd.DataFrame(prediction)])
-output_data_frame.to_excel('结果表/结果表1-预测结果表.xlsx', index=False)
+    # i += 1
+# output_data_frame.to_excel('结果表/结果表1-预测结果表.xlsx', index=False)
